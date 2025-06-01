@@ -8,28 +8,27 @@
 // }
 // export { asyncHandler };
 
-import { apiError } from "./apiError.utils.js";
+import { ApiError } from "./apiError.utils.js";
 
 const asyncHandler = (requestHandler) => {
     return async (req, res, next) => {
         try {
             await requestHandler(req, res, next);
         } catch (error) {
-            if (error instanceof apiError) {
-                // Handle custom API errors
-                return res.status(error.statusCode || 500).json({
+            if (error instanceof ApiError) {
+                return res.status(error.statusCode).json({
                     success: false,
                     message: error.message,
-                    errors: error.errors,
+                    errors: error.errors || []
                 });
             }
-            // Handle other unexpected errors
             return res.status(500).json({
                 success: false,
                 message: "Internal Server Error",
-                errors: [error.message],
+                errors: [error.message]
             });
         }
     };
 };
+
 export { asyncHandler };

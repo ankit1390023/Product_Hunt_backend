@@ -1,50 +1,47 @@
-import express, { urlencoded } from 'express';
-import cors from 'cors';
-import cookieParser from 'cookie-parser';
+import express from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import { createServer } from "http";
+import { Server } from "socket.io";
+import { initializeSocket } from "./config/socket.js";
+import routes from "./routes/index.js";
 
 const app = express();
 
-const allowedOrigins = [
-    "https://workify-frontend.vercel.app",// Production frontend
-    "http://localhost:5173", // Local development
-
-];
-
+// Middleware
 app.use(cors({
-    origin: function (origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error("Not allowed by CORS"));
-        }
-    },
-    credentials: true, // ✅ Required for cookies
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"], // ✅ Add required headers
+    origin: process.env.FRONTEND_URL,
+    credentials: true
 }));
-
-// ✅ Explicitly allow credentials in headers
-app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Credentials", "true");
-    next();
-});
-
-app.use(express.json({ limit: "16kb" }));
-app.use(urlencoded({ extended: true, limit: "16kb" }));
-app.use(express.static("public"));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Import routes
-import userRouter from './routes/user.route.js';
-import companyRouter from './routes/company.route.js';
-import jobRouter from './routes/job.route.js';
-import applicationRouter from './routes/application.route.js';
-import dashboardRouter from './routes/dashboard.route.js';
+// Routes
+app.use(routes);
 
-// Route declarations
-app.use('/api/v1/user', userRouter);
-app.use('/api/v1/company', companyRouter);
-app.use('/api/v1/job', jobRouter);
-app.use('/api/v1/application', applicationRouter);
-app.use('/api/v1/dashboard', dashboardRouter);
-export { app };
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(err.statusCode || 500).json({
+        success: false,
+        message: err.message || "Internal Server Error",
+        errors: err.errors || []
+    });
+});
+
+// Create HTTP server
+const httpServer = createServer(app);
+
+// Initialize Socket.IO
+const io = new Server(httpServer, {
+    cors: {
+        origin: process.env.FRONTEND_URL,
+        credentials: true
+    }
+});
+
+// Initialize socket connection
+initializeSocket(io);
+
+export { app, httpServer as server };

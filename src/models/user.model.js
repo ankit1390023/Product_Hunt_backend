@@ -2,126 +2,141 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-// Create a schema for the User
 const userSchema = new mongoose.Schema({
-    fullName: {
+    username: {
         type: String,
-        required: [true, "Please add a name"],
+        required: [true, 'Username is required'],
+        unique: true,
         trim: true,
-        maxlength: [50, "Name cannot be more than 50 characters"],
+        minlength: [3, 'Username must be at least 3 characters long']
     },
     email: {
         type: String,
-        required: [true, "Please add an email"],
+        required: [true, 'Email is required'],
         unique: true,
         trim: true,
-        match: [
-            /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
-            "Please add a valid email"
-        ]
-    },
-    phoneNumber: {
-        type: String,
-        required: [true, "Please add a phone number"],
-        trim: true,
+        lowercase: true,
+        match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
     },
     password: {
         type: String,
-        required: [true, "Please add a password"],
-        minlength: [6, "Password must be at least 6 characters long"],
-        maxlength: [14, "Password max length is 14 characters"],
-        // select: false  // Don't return the password field in queries
+        required: [true, 'Password is required'],
+        minlength: [6, 'Password must be at least 6 characters long']
+    },
+    avatar: {
+        type: String,
+        default: 'default-avatar.png'
+    },
+    bio: {
+        type: String,
+        maxlength: 500
     },
     role: {
         type: String,
-        enum: ["student", "recruiter"],
-        required: true,
+        enum: ['user', 'admin', 'moderator'],
+        default: 'user'
     },
+    upvotedProducts: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Product'
+    }],
+    submittedProducts: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Product'
+    }],
     profile: {
-        bio: {
+        displayName: {
             type: String,
-            default: "",
+            trim: true
         },
-        skills: [{ type: String }],
-        resume: {
+        headline: {
             type: String,
-            default: ""
+            trim: true,
+            maxlength: 200
         },
-        resumeOriginalName: { type: String },
-        company: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Company'
-        },
-        avatar: {
+        website: {
             type: String,
-            default: ""
+            trim: true
         },
-        coverImage: {
-            type: String,
-            default: ""
-        },
-        // New fields for students
         location: {
-            city: { type: String, default: "" },
-            country: { type: String, default: "" },
-            address: { type: String, default: "" }
-        },
-        education: [{
-            institution: { type: String },
-            degree: { type: String },
-            fieldOfStudy: { type: String },
-            startDate: { type: Date },
-            endDate: { type: Date },
-            current: { type: Boolean, default: false },
-            description: { type: String }
-        }],
-        experience: [{
-            company: { type: String },
-            position: { type: String },
-            startDate: { type: Date },
-            endDate: { type: Date },
-            current: { type: Boolean, default: false },
-            description: { type: String }
-        }],
-        languages: [{
-            language: { type: String },
-            proficiency: {
-                type: String,
-                enum: ['Beginner', 'Intermediate', 'Advanced', 'Native']
-            }
-        }],
-        certifications: [{
-            name: { type: String },
-            issuer: { type: String },
-            date: { type: Date },
-            expiryDate: { type: Date },
-            credentialId: { type: String },
-            credentialUrl: { type: String }
-        }],
-        socialLinks: {
-            linkedin: { type: String, default: "" },
-            github: { type: String, default: "" },
-            portfolio: { type: String, default: "" },
-            twitter: { type: String, default: "" }
-        },
-        interests: [{ type: String }],
-        preferredJobTypes: [{
             type: String,
-            enum: ['Full-time', 'Part-time', 'Contract', 'Internship', 'Remote']
-        }],
-        expectedSalary: {
-            amount: { type: Number },
-            currency: { type: String, default: "USD" }
+            trim: true
+        },
+        socialLinks: {
+            twitter: String,
+            github: String,
+            linkedin: String,
+            productHunt: String
+        },
+        makerProfile: {
+            type: Boolean,
+            default: false
+        },
+        makerBio: {
+            type: String,
+            maxlength: 1000
         }
     },
+    activity: {
+        lastActive: {
+            type: Date,
+            default: Date.now
+        },
+        totalUpvotes: {
+            type: Number,
+            default: 0
+        },
+        totalComments: {
+            type: Number,
+            default: 0
+        },
+        totalProducts: {
+            type: Number,
+            default: 0
+        }
+    },
+    notifications: {
+        email: {
+            newComments: { type: Boolean, default: true },
+            newUpvotes: { type: Boolean, default: true },
+            productUpdates: { type: Boolean, default: true },
+            marketing: { type: Boolean, default: false }
+        },
+        inApp: {
+            newComments: { type: Boolean, default: true },
+            newUpvotes: { type: Boolean, default: true },
+            productUpdates: { type: Boolean, default: true }
+        }
+    },
+    isVerified: {
+        type: Boolean,
+        default: false
+    },
+    isActive: {
+        type: Boolean,
+        default: true
+    },
     refreshToken: {
-        type: String,
+        type: String
     },
     resetPasswordToken: {
-        type: String,
+        type: String
     },
     resetPasswordExpiry: {
-        type: Date,
+        type: Date
+    },
+    emailVerificationToken: {
+        type: String
+    },
+    emailVerificationExpiry: {
+        type: Date
+    },
+    loginAttempts: {
+        type: Number,
+        default: 0
+    },
+    lockUntil: {
+        type: Date
     }
 }, {
     timestamps: true
@@ -129,34 +144,50 @@ const userSchema = new mongoose.Schema({
 
 // Pre-save hook to hash password
 userSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) return next(); // Only hash the password if it has been modified
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
+    if (!this.isModified('password')) return next();
+
+    try {
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
+        next();
+    } catch (error) {
+        next(error);
+    }
 });
-//custom Method to compare password
-userSchema.methods.comparePassword = async function (candidatePassword) {
-    console.log(candidatePassword);
-    console.log(this.password);
+
+// Method to compare password
+userSchema.methods.isPasswordCorrect = async function (candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
 };
-// Method to generate JWT
-userSchema.methods.genAccessToken = async function () {
-    const payload = {
-        _id: this._id,
-        email: this.email,
-        username: this.username,
-        fullname: this.fullName,
-    }
 
-    return jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, { expiresIn: process.env.ACCESS_TOKEN_EXPIRY });
+// Method to generate access token
+userSchema.methods.generateAccessToken = function () {
+    return jwt.sign(
+        {
+            _id: this._id,
+            email: this.email,
+            username: this.username,
+            role: this.role
+        },
+        process.env.ACCESS_TOKEN_SECRET,
+        {
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+        }
+    );
+};
 
-}
-userSchema.methods.genRefreshToken = async function () {
-    const payload = {
-        _id: this._id,
-    }
-    return jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET, { expiresIn: process.env.REFRESH_TOKEN_EXPIRY })
-}
-const User = mongoose.model('User', userSchema);
-export { User };
+// Method to generate refresh token
+userSchema.methods.generateRefreshToken = function () {
+    return jwt.sign(
+        {
+            _id: this._id
+        },
+        process.env.REFRESH_TOKEN_SECRET,
+        {
+            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+        }
+    );
+};
+
+export const User = mongoose.model('User', userSchema);
+
