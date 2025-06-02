@@ -1,0 +1,27 @@
+{
+    "env": {
+        "node": true,
+        "es2021": true
+    },
+    "extends": "airbnb-base",
+    "parserOptions": {
+        "ecmaVersion": "latest",
+        "sourceType": "module"
+    },
+    "rules": {
+        "import/extensions": [
+            "error",
+            "always",
+            {
+                "js": "always"
+            }
+        ],
+        "no-console": "off",
+        "no-unused-vars": [
+            "error",
+            {
+                "argsIgnorePattern": "^_"
+            }
+        ]
+    }
+}
