@@ -3,6 +3,7 @@ import { ApiError } from "../utils/apiError.utils.js";
 import { ApiResponse } from "../utils/apiResponse.utils.js";
 import { Product } from "../models/product.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.utils.js";
+import fs from 'fs';
 
 // Create a new product
 const createProduct = asyncHandler(async (req, res) => {
@@ -12,8 +13,15 @@ const createProduct = asyncHandler(async (req, res) => {
         description,
         website,
         category,
-        launchDate
+        launchDate,
+        twitter,
+        github
     } = req.body;
+
+    // Validate required fields
+    if (!name || !tagline || !description || !website || !category) {
+        throw new ApiError(400, "All required fields must be provided");
+    }
 
     // Handle logo and images upload
     const logoLocalPath = req.files?.logo?.[0]?.path;
@@ -23,43 +31,66 @@ const createProduct = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Product logo is required");
     }
 
-    // Upload logo to cloudinary
-    const logo = await uploadOnCloudinary(logoLocalPath);
-    if (!logo?.secure_url) {
-        throw new ApiError(400, "Error uploading logo");
-    }
-
-    // Upload product images
-    const images = [];
-    for (const imagePath of imagesLocalPaths) {
-        const image = await uploadOnCloudinary(imagePath);
-        if (image?.secure_url) {
-            images.push(image.secure_url);
+    try {
+        // Upload logo to cloudinary
+        const logo = await uploadOnCloudinary(logoLocalPath);
+        if (!logo?.secure_url) {
+            throw new ApiError(400, "Error uploading logo");
         }
+
+        // Upload product images
+        const images = [];
+        for (const imagePath of imagesLocalPaths) {
+            const image = await uploadOnCloudinary(imagePath);
+            if (image?.secure_url) {
+                images.push(image.secure_url);
+            }
+        }
+
+        // Create product
+        const product = await Product.create({
+            name,
+            tagline,
+            description,
+            website,
+            logo: logo.secure_url,
+            images,
+            category,
+            submittedBy: req.user._id,
+            launchDate: launchDate || new Date(),
+            twitter,
+            github,
+            status: 'draft' // Start as draft
+        });
+
+        // Update user's submitted products
+        await req.user.updateOne({
+            $push: { submittedProducts: product._id },
+            $inc: { 'activity.totalProducts': 1 }
+        });
+
+        // Populate submitter details
+        await product.populate('submittedBy', 'username profile.displayName profile.headline');
+
+        return res.status(201).json(
+            new ApiResponse(201, product, "Product created successfully")
+        );
+    } catch (error) {
+        console.error('Error in createProduct:', error);
+        throw new ApiError(500, error.message || "Error creating product");
+    } finally {
+        // Clean up temporary files
+        if (logoLocalPath) {
+            fs.unlink(logoLocalPath, (err) => {
+                if (err) console.error('Error deleting logo temp file:', err);
+            });
+        }
+        imagesLocalPaths.forEach(path => {
+            fs.unlink(path, (err) => {
+                if (err) console.error('Error deleting image temp file:', err);
+            });
+        });
     }
-
-    // Create product
-    const product = await Product.create({
-        name,
-        tagline,
-        description,
-        website,
-        logo: logo.secure_url,
-        images,
-        category,
-        submittedBy: req.user._id,
-        launchDate: launchDate || new Date()
-    });
-
-    // Update user's submitted products
-    await req.user.updateOne({
-        $push: { submittedProducts: product._id },
-        $inc: { 'activity.totalProducts': 1 }
-    });
-
-    return res.status(201).json(
-        new ApiResponse(201, product, "Product created successfully")
-    );
 });
 
 // Get product details
@@ -68,7 +99,6 @@ const getProduct = asyncHandler(async (req, res) => {
 
     const product = await Product.findById(productId)
         .populate('submittedBy', 'username profile.displayName profile.headline')
-        .populate('category', 'name slug')
         .populate({
             path: 'comments',
             populate: {

@@ -3,15 +3,16 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import { initializeSocket } from "./config/socket.js";
 import routes from "./routes/index.js";
 
 const app = express();
 
 // Middleware
 app.use(cors({
-    origin: process.env.FRONTEND_URL,
-    credentials: true
+    origin: "http://localhost:3000",
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -36,12 +37,10 @@ const httpServer = createServer(app);
 // Initialize Socket.IO
 const io = new Server(httpServer, {
     cors: {
-        origin: process.env.FRONTEND_URL,
-        credentials: true
+        origin: "http://localhost:3000",
+        credentials: true,
+        methods: ['GET', 'POST']
     }
 });
 
-// Initialize socket connection
-initializeSocket(io);
-
-export { app, httpServer as server };
+export { app, httpServer, io };

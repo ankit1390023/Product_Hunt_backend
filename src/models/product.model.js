@@ -21,7 +21,8 @@ const productSchema = new mongoose.Schema({
     description: {
         type: String,
         required: [true, 'Description is required'],
-        trim: true
+        trim: true,
+        maxlength: [2000, 'Description cannot be more than 2000 characters']
     },
     website: {
         type: String,
@@ -37,9 +38,9 @@ const productSchema = new mongoose.Schema({
         type: String
     }],
     category: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Category',
-        required: [true, 'Category is required']
+        type: String,
+        required: true,
+        enum: ['AI', 'SaaS', 'DevTools', 'Mobile', 'Web', 'Design', 'Marketing', 'Analytics', 'Security', 'Blockchain', 'IoT', 'Gaming', 'Education', 'Health', 'Finance']
     },
     submittedBy: {
         type: mongoose.Schema.Types.ObjectId,
@@ -60,8 +61,8 @@ const productSchema = new mongoose.Schema({
     }],
     status: {
         type: String,
-        enum: ['pending', 'approved', 'rejected'],
-        default: 'pending'
+        enum: ['draft', 'pending', 'active', 'rejected'],
+        default: 'draft'
     },
     featured: {
         type: Boolean,
@@ -82,6 +83,14 @@ const productSchema = new mongoose.Schema({
     github: {
         type: String,
         trim: true
+    },
+    submissionDate: {
+        type: Date,
+        default: Date.now
+    },
+    lastUpdated: {
+        type: Date,
+        default: Date.now
     }
 }, {
     timestamps: true

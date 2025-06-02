@@ -4,7 +4,6 @@ import { ApiResponse } from "../utils/apiResponse.utils.js";
 import { Product } from "../models/product.model.js";
 import { User } from "../models/user.model.js";
 import { Comment } from "../models/comment.model.js";
-import { Category } from "../models/category.model.js";
 
 // Get product analytics
 const getProductAnalytics = asyncHandler(async (req, res) => {
@@ -33,8 +32,7 @@ const getProductAnalytics = asyncHandler(async (req, res) => {
 
     // Get product details
     const product = await Product.findById(productId)
-        .populate('submittedBy', 'username profile.displayName')
-        .populate('category', 'name');
+        .populate('submittedBy', 'username profile.displayName');
 
     if (!product) {
         throw new ApiError(404, "Product not found");
@@ -254,15 +252,14 @@ const getUserAnalytics = asyncHandler(async (req, res) => {
 const getPlatformAnalytics = asyncHandler(async (req, res) => {
     // Check if user is admin
     if (req.user.role !== 'admin') {
-        throw new ApiError(403, "Only admins can access platform analytics");
+        throw new ApiError(403, "You are not authorized to access platform analytics");
     }
 
-    // Get overall platform metrics
+    // Get platform metrics
     const platformMetrics = await Promise.all([
         Product.countDocuments(),
         User.countDocuments(),
-        Comment.countDocuments(),
-        Category.countDocuments()
+        Comment.countDocuments()
     ]);
 
     // Get engagement metrics
@@ -272,48 +269,9 @@ const getPlatformAnalytics = asyncHandler(async (req, res) => {
                 _id: null,
                 totalViews: { $sum: '$views' },
                 totalUpvotes: { $sum: '$upvoteCount' },
-                averageViews: { $avg: '$views' },
-                averageUpvotes: { $avg: '$upvoteCount' }
+                totalComments: { $sum: { $size: '$comments' } }
             }
         }
-    ]);
-
-    // Get category performance
-    const categoryPerformance = await Product.aggregate([
-        {
-            $group: {
-                _id: '$category',
-                totalProducts: { $sum: 1 },
-                totalViews: { $sum: '$views' },
-                totalUpvotes: { $sum: '$upvoteCount' }
-            }
-        },
-        {
-            $lookup: {
-                from: 'categories',
-                localField: '_id',
-                foreignField: '_id',
-                as: 'category'
-            }
-        },
-        { $unwind: '$category' },
-        {
-            $project: {
-                category: {
-                    _id: '$category._id',
-                    name: '$category.name',
-                    icon: '$category.icon'
-                },
-                metrics: {
-                    totalProducts: '$totalProducts',
-                    totalViews: '$totalViews',
-                    totalUpvotes: '$totalUpvotes',
-                    averageViews: { $divide: ['$totalViews', '$totalProducts'] },
-                    averageUpvotes: { $divide: ['$totalUpvotes', '$totalProducts'] }
-                }
-            }
-        },
-        { $sort: { 'metrics.totalUpvotes': -1 } }
     ]);
 
     return res.status(200).json(
@@ -321,11 +279,9 @@ const getPlatformAnalytics = asyncHandler(async (req, res) => {
             platformMetrics: {
                 totalProducts: platformMetrics[0],
                 totalUsers: platformMetrics[1],
-                totalComments: platformMetrics[2],
-                totalCategories: platformMetrics[3]
+                totalComments: platformMetrics[2]
             },
-            engagementMetrics: engagementMetrics[0],
-            categoryPerformance
+            engagementMetrics: engagementMetrics[0]
         }, "Platform analytics fetched successfully")
     );
 });

@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Create temp directory if it doesn't exist
-const tempDir = path.join(__dirname, '../../public/temp');
+const tempDir = path.join(__dirname, '../../../public/temp');
 if (!fs.existsSync(tempDir)) {
     fs.mkdirSync(tempDir, { recursive: true });
 }
@@ -28,9 +28,6 @@ const storage = multer.diskStorage({
 // File filter to accept multiple file formats
 const fileFilter = (req, file, cb) => {
     const allowedMimeTypes = [
-        'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'image/jpeg',
         'image/png',
         'image/jpg'
@@ -39,7 +36,7 @@ const fileFilter = (req, file, cb) => {
     if (allowedMimeTypes.includes(file.mimetype)) {
         cb(null, true);
     } else {
-        cb(new Error('Only PDF, DOC, DOCX, JPG, JPEG, and PNG files are allowed!'), false);
+        cb(new Error('Only JPG, JPEG, and PNG files are allowed!'), false);
     }
 };
 

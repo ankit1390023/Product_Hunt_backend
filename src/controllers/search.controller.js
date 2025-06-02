@@ -4,7 +4,6 @@ import { ApiResponse } from "../utils/apiResponse.utils.js";
 import { Product } from "../models/product.model.js";
 import { User } from "../models/user.model.js";
 import { Comment } from "../models/comment.model.js";
-import { Category } from "../models/category.model.js";
 
 // Search products
 const searchProducts = asyncHandler(async (req, res) => {
@@ -63,15 +62,14 @@ const searchProducts = asyncHandler(async (req, res) => {
     // Calculate pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    // Execute search
+    // Get products with pagination and sorting
     const products = await Product.find(searchQuery)
         .sort({ [sortBy]: sortOrder === 'desc' ? -1 : 1 })
         .skip(skip)
         .limit(parseInt(limit))
-        .populate('submittedBy', 'username profile.displayName profile.headline')
-        .populate('category', 'name slug');
+        .populate('submittedBy', 'username profile.displayName');
 
-    // Get total count
+    // Get total count for pagination
     const total = await Product.countDocuments(searchQuery);
 
     return res.status(200).json(
@@ -83,7 +81,7 @@ const searchProducts = asyncHandler(async (req, res) => {
                 limit: parseInt(limit),
                 pages: Math.ceil(total / parseInt(limit))
             }
-        }, "Products search completed successfully")
+        }, "Products fetched successfully")
     );
 });
 
@@ -257,21 +255,6 @@ const getSearchSuggestions = asyncHandler(async (req, res) => {
             text: u.profile.displayName || u.username,
             subtitle: `@${u.username}`,
             username: u.username
-        })));
-    }
-
-    // Category suggestions
-    if (type === 'all' || type === 'categories') {
-        const categorySuggestions = await Category.find({
-            name: { $regex: query, $options: 'i' }
-        })
-            .limit(5)
-            .select('name slug');
-
-        suggestions.push(...categorySuggestions.map(c => ({
-            type: 'category',
-            text: c.name,
-            slug: c.slug
         })));
     }
 

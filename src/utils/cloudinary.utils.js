@@ -3,9 +3,9 @@ import { ApiError } from './apiError.utils.js';
 
 
 cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_SECRET_KEY,
+    cloud_name: 'db5dcrh09',
+    api_key: '881541497963323',
+    api_secret: '-8yqwOac4YJqgKBG3YUsQoeYSF4'
 });
 
 

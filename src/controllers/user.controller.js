@@ -11,7 +11,27 @@ import { sendEmail } from "../utils/email.utils.js";
 
 // Authentication Controllers
 const register = asyncHandler(async (req, res) => {
-    const { username, email, password } = req.body;
+    console.log('Backend - Received registration request body:', req.body);
+    console.log('Backend - Received file:', req.file);
+
+    const { username, email, password, role = 'user' } = req.body;
+
+    // Validate required fields
+    if (!username || !email || !password) {
+        throw new ApiError(400, "All fields are required");
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        throw new ApiError(400, "Invalid email format");
+    }
+
+    // Validate role
+    const validRoles = ['user', 'admin', 'moderator'];
+    if (!validRoles.includes(role)) {
+        throw new ApiError(400, "Invalid role specified");
+    }
 
     // Check if user already exists
     const existingUser = await User.findOne({
@@ -22,11 +42,29 @@ const register = asyncHandler(async (req, res) => {
         throw new ApiError(409, "User with email or username already exists");
     }
 
+    // Handle avatar upload if present
+    let avatarUrl = null;
+    if (req.file) {
+        try {
+            console.log('Backend - Uploading avatar to Cloudinary:', req.file);
+            const avatar = await uploadOnCloudinary(req.file.path);
+            console.log('Backend - Cloudinary upload response:', avatar);
+            if (avatar) {
+                avatarUrl = avatar.secure_url;
+            }
+        } catch (error) {
+            console.error('Backend - Error uploading avatar:', error);
+            throw new ApiError(500, "Error uploading avatar");
+        }
+    }
+
     // Create new user
     const user = await User.create({
-        username,
-        email,
-        password
+        username: username.trim(),
+        email: email.trim(),
+        password,
+        avatar: avatarUrl,
+        role
     });
 
     // Generate tokens

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { upload } from "../middlewares/multer.middleware.js";
 import {
     register,
     login,
@@ -14,7 +15,7 @@ import {
 const router = Router();
 
 // Public routes
-router.post("/register", register);
+router.post("/register", upload.single('avatar'), register);
 router.post("/login", login);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
