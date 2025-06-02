@@ -7,6 +7,7 @@
     "dev": "nodemon src/server.js",
     "start": "node dist/server.js",
     "build": "rimraf dist && babel src -d dist --copy-files",
+    "postinstall": "npm run build",
     "clean": "rimraf dist",
     "lint": "eslint src/**/*.js",
     "lint:fix": "eslint src/**/*.js --fix"
