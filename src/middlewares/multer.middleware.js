@@ -6,8 +6,11 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Get the root directory of the backend
+const rootDir = path.resolve(__dirname, '../../');
+
 // Create temp directory if it doesn't exist
-const tempDir = path.join(__dirname, '../../../public/temp');
+const tempDir = path.join(rootDir, 'public', 'temp');
 if (!fs.existsSync(tempDir)) {
     fs.mkdirSync(tempDir, { recursive: true });
 }
