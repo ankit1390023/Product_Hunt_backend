@@ -5,10 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon src/server.js",
-    "start": "node src/server.js",
-    "test": "jest --detectOpenHandles --forceExit",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "start": "node src/server.js"
   },
   "author": "Ankit Srivastav",
   "license": "ISC",
@@ -32,20 +29,6 @@
     "socket.io": "^4.7.4"
   },
   "devDependencies": {
-    "jest": "^29.7.0",
-    "mongodb-memory-server": "^9.1.6",
-    "nodemon": "^3.1.0",
-    "supertest": "^6.3.4"
-  },
-  "jest": {
-    "testEnvironment": "node",
-    "setupFilesAfterEnv": [
-      "./src/tests/setup.js"
-    ],
-    "verbose": true,
-    "forceExit": true,
-    "clearMocks": true,
-    "resetMocks": true,
-    "restoreMocks": true
+    "nodemon": "^3.1.0"
   }
 }

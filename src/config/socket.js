@@ -46,12 +46,4 @@ export const initializeSocket = (server) => {
     });
 
     return io;
-};
-
-// Export a function to emit notifications
-export const emitNotification = (io, userId, notification) => {
-    if (!io || !userId || !notification) {
-        throw new ApiError(400, "Invalid parameters for notification emission");
-    }
-    io.to(userId.toString()).emit("notification", notification);
 }; 

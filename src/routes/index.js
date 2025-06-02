@@ -3,9 +3,7 @@ import authRoutes from "./auth.route.js";
 import userRoutes from "./user.route.js";
 import productRoutes from "./product.route.js";
 import commentRoutes from "./comment.route.js";
-import notificationRoutes from "./notification.route.js";
 import searchRoutes from "./search.route.js";
-import analyticsRoutes from "./analytics.route.js";
 import express from 'express';
 
 const router = Router();
@@ -25,14 +23,8 @@ v1Router.use("/products", productRoutes);
 // Comment routes
 v1Router.use("/comments", commentRoutes);
 
-// Notification routes
-v1Router.use("/notifications", notificationRoutes);
-
 // Search routes
 v1Router.use("/search", searchRoutes);
-
-// Analytics routes
-v1Router.use("/analytics", analyticsRoutes);
 
 // Mount v1 routes
 router.use("/api/v1", v1Router);
