@@ -25,18 +25,12 @@ const storage = multer.diskStorage({
     }
 });
 
-// File filter to accept multiple file formats
+// File filter to accept all image formats
 const fileFilter = (req, file, cb) => {
-    const allowedMimeTypes = [
-        'image/jpeg',
-        'image/png',
-        'image/jpg'
-    ];
-
-    if (allowedMimeTypes.includes(file.mimetype)) {
+    if (file.mimetype.startsWith('image/')) {
         cb(null, true);
     } else {
-        cb(new Error('Only JPG, JPEG, and PNG files are allowed!'), false);
+        cb(new Error('Only image files are allowed!'), false);
     }
 };
 
