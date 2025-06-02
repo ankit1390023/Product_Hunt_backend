@@ -5,8 +5,12 @@
             {
                 "targets": {
                     "node": "current"
-                }
+                },
+                "modules": false,
+                "useBuiltIns": "usage",
+                "corejs": 3
             }
         ]
-    ]
+    ],
+    "sourceType": "module"
 }
