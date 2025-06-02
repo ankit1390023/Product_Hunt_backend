@@ -2,7 +2,6 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { createServer } from "http";
-import { Server } from "socket.io";
 import routes from "./routes/index.js";
 
 const app = express();
@@ -34,13 +33,4 @@ app.use((err, req, res, next) => {
 // Create HTTP server
 const httpServer = createServer(app);
 
-// Initialize Socket.IO
-const io = new Server(httpServer, {
-    cors: {
-        origin: "http://localhost:3000",
-        credentials: true,
-        methods: ['GET', 'POST']
-    }
-});
-
-export { app, httpServer, io };
+export { app, httpServer };

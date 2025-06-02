@@ -1,7 +1,6 @@
 import dotenv from 'dotenv';
 import { connectDB } from './db/connection.js'
-import { app, httpServer, io } from './app.js'
-import { initializeSocket } from './config/socket.js';
+import { app, httpServer } from './app.js'
 
 // Load environment variables
 dotenv.config();
@@ -31,10 +30,6 @@ const startServer = async () => {
         // Connect to MongoDB
         await connectDB();
         console.log('Connected to MongoDB');
-
-        // Initialize socket connection
-        initializeSocket(io);
-        console.log('Socket.IO initialized');
 
         // Start server
         const port = process.env.PORT || 8000;
