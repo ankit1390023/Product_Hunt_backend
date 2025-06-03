@@ -8,13 +8,10 @@ const app = express();
 
 // Middleware
 app.use(cors({
-    origin: [
-        "http://localhost:3000",
-        "https://product-hunt-frontend.vercel.app"
-    ],
+    origin: "https://product-hunt-frontend.vercel.app",
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
